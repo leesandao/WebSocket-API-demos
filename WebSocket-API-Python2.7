@@ -1,0 +1,31 @@
+# -*- coding: utf-8 -*-
+# author: Raynor
+# timestamp: 5:21 AM  2018/5/3
+
+from websocket import create_connection
+import gzip, StringIO, time
+
+if __name__ == '__main__':
+	while(1):
+		try:
+			ws = create_connection("wss://api.huobipro.com/ws")
+			break
+		except:
+			print('connection to ws error, retry....')
+			time.sleep(5)
+
+	tradeStr="""{"sub": "market.ethusdt.kline.1min","id": "id10"}"""
+
+	ws.send(tradeStr)
+	while(1):
+		compressData=ws.recv()
+		compressStream=StringIO.StringIO(compressData)
+		gzipper=gzip.GzipFile(fileobj=compressStream)
+		result=gzipper.read()
+		if result[:7] == '{"ping"':
+			ts=result[8:21]
+			pong='{"pong":'+ts+'}'
+			ws.send(pong)
+			ws.send(tradeStr)
+		else:
+			print(result)
